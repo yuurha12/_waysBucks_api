@@ -15,10 +15,6 @@ type UsersProfileResponse struct {
 	Image    string `json:"image"`
 }
 
-type UsersProductsResponse struct {
-	ID int `json:"id"`
-}
-
 func (UsersProfileResponse) TableName() string {
 	return "users"
 }
