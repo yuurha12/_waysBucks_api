@@ -74,19 +74,18 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	// get data user token
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	buyerId := int(userInfo["id"].(float64))
+	userId := int(userInfo["id"].(float64))
 
-	// Get dataFile from midleware and store to fileFullname variable here ...
+	// Get dataFile from midleware and store to filename variable here ...
 	dataContex := r.Context().Value("dataFile") // add this code
 	filename := dataContex.(string)             // add this code
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
-	qty, _ := strconv.Atoi(r.FormValue("qty"))
+	// qty, _ := strconv.Atoi(r.FormValue("qty"))
 	request := productdto.ProductRequest{
-		Title: r.FormValue("Title"),
+		Title: r.FormValue("title"),
 		Price: price,
-		Image: filename,
-		Qty: qty,
+		// Qty:   qty,
 	}
 
 	validation := validator.New()
@@ -99,10 +98,11 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	product := models.Product{
-		Title:   request.Title,
-		Price:   request.Price,
-		Image:   filename,
-		BuyerID: buyerId,
+		Title: request.Title,
+		Price: request.Price,
+		Image: filename,
+		// Qty:    request.Qty,
+		UserID: userId,
 	}
 
 	product, err = h.ProductRepository.CreateProduct(product)
@@ -120,12 +120,97 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func (h *handlerProduct) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	user, err := h.ProductRepository.GetProduct(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	data, err := h.ProductRepository.DeleteProduct(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Status: "success", Data: convertResponseProduct(data)}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	dataContex := r.Context().Value("dataFile") // add this code
+	filename := dataContex.(string)             // add this code
+
+	// request := new(productdto.UpdateProduct)
+	// if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	// 	json.NewEncoder(w).Encode(response)
+	// 	return
+	// }
+
+	price, _ := strconv.Atoi(r.FormValue("price"))
+	qty, _ := strconv.Atoi(r.FormValue("qty"))
+
+	request := productdto.UpdateProduct{
+		Title: r.FormValue("title"),
+		Price: price,
+		Qty:   qty,
+	}
+
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	product, err := h.ProductRepository.GetProduct(int(id))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	if request.Title != "" {
+		product.Title = request.Title
+	}
+
+	if request.Price != 0 {
+		product.Price = request.Price
+	}
+	if filename != "false" {
+		product.Image = filename
+	}
+
+	if qty != 0 {
+		product.Qty = request.Qty
+	}
+
+	data, err := h.ProductRepository.UpdateProduct(product)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Status: "success", Data: convertResponseProduct(data)}
+	json.NewEncoder(w).Encode(response)
+}
+
 func convertResponseProduct(u models.Product) models.ProductResponse {
 	return models.ProductResponse{
-		ID:    u.ID,
 		Title: u.Title,
 		Price: u.Price,
 		Image: u.Image,
-		Qty:   u.Qty,
+		// Qty:   u.Qty,
+		// User:     u.User,
 	}
 }

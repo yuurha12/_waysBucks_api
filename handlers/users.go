@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	dto "waysbucks_BE/dto/result"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	// "github.com/golang-jwt/jwt/v4"
 )
 
 type handler struct {
@@ -100,12 +102,22 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(usersdto.UpdateUserRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
+	dataContex := r.Context().Value("dataFile") // add this code
+	filename := dataContex.(string)
+	fmt.Println(filename) // add this code
+
+	// request := new(usersdto.UpdateUserRequest)
+	// if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	// 	w.WriteHeader(http.StatusBadRequest)
+	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	// 	json.NewEncoder(w).Encode(response)
+	// 	return
+	// }
+
+	request := usersdto.UpdateUserRequest{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+		Fullname: r.FormValue("fullname"),
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
@@ -116,7 +128,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-
+	fmt.Println(id)
 	if request.Fullname != "" {
 		user.Fullname = request.Fullname
 	}
@@ -129,8 +141,8 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Password = request.Password
 	}
 
-	if request.Image != "" {
-		user.Image = request.Image
+	if request.Image != "false" {
+		user.Image = filename
 	}
 
 	data, err := h.UserRepository.UpdateUser(user)
@@ -140,6 +152,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	fmt.Println(data)
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: convertResponse(data)}
@@ -174,7 +187,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func convertResponse(u models.User) usersdto.UserResponse {
 	return usersdto.UserResponse{
-		 
+
 		ID:       u.ID,
 		Email:    u.Email,
 		Password: u.Password,
