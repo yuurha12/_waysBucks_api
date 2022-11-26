@@ -172,7 +172,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := h.UserRepository.DeleteUser(user)
+	_, err = h.UserRepository.DeleteUser(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -180,8 +180,10 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := user.ID
+
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Status: "success", Data: convertResponse(data)}
+	response := dto.SuccessResult{Status: "success", Data: data}
 	json.NewEncoder(w).Encode(response)
 }
 
