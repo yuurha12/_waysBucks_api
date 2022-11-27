@@ -57,6 +57,9 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		Email:    request.Email,
 		Password: password,
 		Fullname: request.Fullname,
+		Role:     "user",
+		CreateAt: time.Now(),
+		UpdateAt: time.Now(),
 	}
 
 	_, err = h.AuthRepository.Register(user)
@@ -114,7 +117,8 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	//generate token
 	claims := jwt.MapClaims{}
 	claims["id"] = user.ID
-	claims["exp"] = time.Now().Add(time.Hour * 2).Unix() // 2 hours expired
+	claims["role"] = user.Role
+	claims["exp"] = time.Now().Add(time.Hour * 3).Unix() // 3 hours expired
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)
 	if errGenerateToken != nil {
@@ -124,6 +128,7 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	loginResponse := authdto.LoginResponse{
+		ID:       user.ID,
 		Fullname: user.Fullname,
 		Email:    user.Email,
 		// Password: user.Password,

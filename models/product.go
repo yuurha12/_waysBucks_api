@@ -10,16 +10,6 @@ type Product struct {
 	User   UsersProfileResponse `json:"-" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
-type ProductResponse struct {
-	ID    int    `json:"id"`
-	Title string `json:"title"`
-	Price int    `json:"price"`
-	Image string `json:"image"`
-	// Qty   int    `json:"qty"`
-	// UserID int                  `json:"-"`
-	// User   UsersProfileResponse `json:"user"`
-}
-
 type ProductUserResponse struct {
 	ID     int    `json:"id"`
 	Title  string `json:"title"`
@@ -27,10 +17,6 @@ type ProductUserResponse struct {
 	Image  string `json:"image"`
 	Qty    int    `json:"qty"`
 	UserID int    `json:"-"`
-}
-
-func (ProductResponse) TableName() string {
-	return "products"
 }
 
 func (ProductUserResponse) TableName() string {

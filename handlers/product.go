@@ -74,12 +74,24 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	// get data user token
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
 	userId := int(userInfo["id"].(float64))
 
-	// Get dataFile from midleware and store to filename variable here ...
-	dataContex := r.Context().Value("dataFile") // add this code
-	filename := dataContex.(string)             // add this code
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
+	//admin token condition
+	if userId != id && userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	// Get dataFile from midleware.
+	dataContex := r.Context().Value("dataFile")
+	filename := dataContex.(string)
+
+	//convert integer to string with strconv
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	// qty, _ := strconv.Atoi(r.FormValue("qty"))
 	request := productdto.ProductRequest{
@@ -123,7 +135,20 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 func (h *handlerProduct) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	// get data user token
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+	userId := int(userInfo["id"].(float64))
+
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	if userId != id && userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	user, err := h.ProductRepository.GetProduct(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -150,20 +175,18 @@ func (h *handlerProduct) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+	userId := int(userInfo["id"].(float64))
+
 	dataContex := r.Context().Value("dataFile") // add this code
 	filename := dataContex.(string)             // add this code
 
-	// request := new(productdto.UpdateProduct)
-	// if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-	// 	json.NewEncoder(w).Encode(response)
-	// 	return
-	// }
-
+	//convert int to string for formValue
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	qty, _ := strconv.Atoi(r.FormValue("qty"))
 
+	//form-data
 	request := productdto.UpdateProduct{
 		Title: r.FormValue("title"),
 		Price: price,
@@ -171,6 +194,15 @@ func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	//admin token condition
+	if userId != id && userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	product, err := h.ProductRepository.GetProduct(int(id))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -207,8 +239,8 @@ func (h *handlerProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func convertResponseProduct(u models.Product) models.ProductResponse {
-	return models.ProductResponse{
+func convertResponseProduct(u models.Product) productdto.ProductResponse {
+	return productdto.ProductResponse{
 		ID:    u.ID,
 		Title: u.Title,
 		Price: u.Price,

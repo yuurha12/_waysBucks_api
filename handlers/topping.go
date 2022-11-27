@@ -74,7 +74,18 @@ func (h *handlerTopping) CreateTopping(w http.ResponseWriter, r *http.Request) {
 
 	// get data user token
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
 	userId := int(userInfo["id"].(float64))
+
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	//admin token condition
+	if userId != id && userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
 	// Get dataFile from midleware and store to filename variable here ...
 	dataContex := r.Context().Value("dataFile") // add this code
@@ -123,7 +134,20 @@ func (h *handlerTopping) CreateTopping(w http.ResponseWriter, r *http.Request) {
 func (h *handlerTopping) DeleteTopping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	// get data user token
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+	userId := int(userInfo["id"].(float64))
+
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	if userId != id && userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	user, err := h.ToppingRepository.GetTopping(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -150,16 +174,12 @@ func (h *handlerTopping) DeleteTopping(w http.ResponseWriter, r *http.Request) {
 func (h *handlerTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+	userId := int(userInfo["id"].(float64))
+
 	dataContex := r.Context().Value("dataFile") // add this code
 	filename := dataContex.(string)             // add this code
-
-	// request := new(productdto.UpdateProduct)
-	// if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-	// 	json.NewEncoder(w).Encode(response)
-	// 	return
-	// }
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	qty, _ := strconv.Atoi(r.FormValue("qty"))
@@ -171,6 +191,15 @@ func (h *handlerTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+
+	//admin token condition
+	if userId != id && userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	topping, err := h.ToppingRepository.GetTopping(int(id))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

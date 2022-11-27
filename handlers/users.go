@@ -154,6 +154,8 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(data)
 
+	
+
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: convertResponse(data)}
 	json.NewEncoder(w).Encode(response)
