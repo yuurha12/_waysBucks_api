@@ -2,7 +2,7 @@ package models
 
 type Profile struct {
 	ID     int                  `json:"id" gorm:"primary_key:auto_increment"`
-	Profile []UsersProfileResponse `json:"profile"`
+	Profile []UsersResponse `json:"profile"`
 }
 
 // for association relation with another table (user)

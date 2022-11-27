@@ -113,7 +113,6 @@ func (h *handlerTopping) CreateTopping(w http.ResponseWriter, r *http.Request) {
 		Price: request.Price,
 		Image: filename,
 		// Qty:    request.Qty,
-		UserID: userId,
 	}
 
 	topping, err = h.ToppingRepository.CreateTopping(topping)
@@ -236,8 +235,8 @@ func (h *handlerTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func convertResponseTopping(u models.Topping) models.ToppingResponse {
-	return models.ToppingResponse{
+func convertResponseTopping(u models.Topping) toppingdto.ToppingResponse {
+	return toppingdto.ToppingResponse{
 		ID:    u.ID,
 		Title: u.Title,
 		Price: u.Price,

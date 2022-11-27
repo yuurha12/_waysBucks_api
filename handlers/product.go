@@ -114,7 +114,6 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		Price: request.Price,
 		Image: filename,
 		// Qty:    request.Qty,
-		UserID: userId,
 	}
 
 	product, err = h.ProductRepository.CreateProduct(product)

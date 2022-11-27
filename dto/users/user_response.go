@@ -1,4 +1,4 @@
-package usersdto
+package orderdto
 
 type UserResponse struct {
 	ID       int    `json:"id"`

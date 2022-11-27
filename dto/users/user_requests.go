@@ -1,4 +1,4 @@
-package usersdto
+package orderdto
 
 type CreateUserRequest struct {
 	Email    string `json:"email" form:"email" validate:"required"`
