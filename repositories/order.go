@@ -22,7 +22,7 @@ func RepositoryOrder(db *gorm.DB) *repository {
 
 func (r *repository) FindOrders() ([]models.Order, error) {
 	var orders []models.Order
-	err := r.db.Find(&orders).Error // Using Find method
+	err := r.db.Preload("Buyer").Preload("Product").Preload("Topping").First(&orders).Error // Using Find method
 
 	return orders, err
 }

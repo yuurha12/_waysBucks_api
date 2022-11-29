@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	dto "waysbucks_BE/dto/result"
 	usersdto "waysbucks_BE/dto/users"
@@ -19,6 +20,8 @@ type handler struct {
 	UserRepository repositories.UserRepository
 }
 
+// var path_file_user = "http://localhost:5000/uploads/"
+
 func HandlerUser(UserRepository repositories.UserRepository) *handler {
 	return &handler{UserRepository}
 }
@@ -32,6 +35,10 @@ func (h *handler) FindUsers(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
+	}
+
+	for i, p := range users {
+		users[i].Image = os.Getenv("PATH_FILE") + p.Image
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -153,8 +160,6 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println(data)
-
-	
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: convertResponse(data)}

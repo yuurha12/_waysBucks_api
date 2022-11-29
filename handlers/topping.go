@@ -19,8 +19,8 @@ type handlerTopping struct {
 	ToppingRepository repositories.ToppingRepository
 }
 
-// Create `path_file` Global variable here ...
-var topping_file = os.Getenv("PATH_FILE")
+// Create `path_image` Global variable here ...
+var path_image = "http://localhost:5000/uploads/"
 
 func HandlerTopping(ToppingRepository repositories.ToppingRepository) *handlerTopping {
 	return &handlerTopping{ToppingRepository}
@@ -62,7 +62,7 @@ func (h *handlerTopping) GetTopping(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create Embed Path File on Image property here ...
-	topping.Image = os.Getenv("PATH_FILE") + topping.Image
+	topping.Image = path_image + topping.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: convertResponseTopping(topping)}
@@ -124,6 +124,7 @@ func (h *handlerTopping) CreateTopping(w http.ResponseWriter, r *http.Request) {
 	}
 
 	topping, _ = h.ToppingRepository.GetTopping(topping.ID)
+	topping.Image = path_image + topping.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: topping}

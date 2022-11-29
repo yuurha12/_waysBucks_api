@@ -20,7 +20,7 @@ type handlerProduct struct {
 }
 
 // Create `path_file` Global variable here ...
-var path_file = os.Getenv("PATH_FILE")
+var path_file = "http://localhost:5000/uploads/"
 
 func HandlerProduct(ProductRepository repositories.ProductRepository) *handlerProduct {
 	return &handlerProduct{ProductRepository}
@@ -62,7 +62,7 @@ func (h *handlerProduct) GetProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create Embed Path File on Image property here ...
-	product.Image = os.Getenv("PATH_FILE") + product.Image
+	product.Image = path_file + product.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: convertResponseProduct(product)}
@@ -124,7 +124,9 @@ func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	
 	product, _ = h.ProductRepository.GetProduct(product.ID)
+	product.Image = path_file + product.Image
 
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Status: "success", Data: product}

@@ -20,7 +20,7 @@ func RepositoryTopping(db *gorm.DB) *repository {
 
 func (r *repository) FindToppings() ([]models.Topping, error) {
 	var Toppings []models.Topping
-	err := r.db.Preload("User").Find(&Toppings).Error
+	err := r.db.Find(&Toppings).Error
 
 	return Toppings, err
 }
@@ -28,7 +28,7 @@ func (r *repository) FindToppings() ([]models.Topping, error) {
 func (r *repository) GetTopping(ID int) (models.Topping, error) {
 	var topping models.Topping
 	// not yet using category relation, cause this step doesnt Belong to Many
-	err := r.db.Preload("User").First(&topping, ID).Error
+	err := r.db.First(&topping, ID).Error
 
 	return topping, err
 }
