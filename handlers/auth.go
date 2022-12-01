@@ -6,12 +6,12 @@ import (
 	"log"
 	"net/http"
 	"time"
-	authdto "waysbucks_BE/dto/auth"
-	dto "waysbucks_BE/dto/result"
-	"waysbucks_BE/models"
-	"waysbucks_BE/pkg/bcrypt"
-	jwtToken "waysbucks_BE/pkg/jwt"
-	"waysbucks_BE/repositories"
+	authdto "ways-bucks-api/dto/auth"
+	dto "ways-bucks-api/dto/result"
+	"ways-bucks-api/models"
+	"ways-bucks-api/pkg/bcrypt"
+	jwtToken "ways-bucks-api/pkg/jwt"
+	"ways-bucks-api/repositories"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
@@ -25,7 +25,6 @@ func HandlerAuth(AuthRepository repositories.AuthRepository) *handlerAuth {
 	return &handlerAuth{AuthRepository}
 }
 
-//REGISTER
 func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -54,12 +53,10 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.User{
+		Role:     "user",
 		Email:    request.Email,
 		Password: password,
 		Fullname: request.Fullname,
-		Role:     "user",
-		CreateAt: time.Now(),
-		UpdateAt: time.Now(),
 	}
 
 	_, err = h.AuthRepository.Register(user)
@@ -67,6 +64,7 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
+		return
 	}
 
 	RegisterResponse := authdto.RegisterResponse{
@@ -79,7 +77,6 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//LOGIN
 func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -96,29 +93,26 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 		Password: request.Password,
 	}
 
-	// Check email
 	user, err := h.AuthRepository.Login(user.Email)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "wrong email"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// Check password
 	isValid := bcrypt.CheckPasswordHash(request.Password, user.Password)
 	if !isValid {
 		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "wrong email or password"}
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "wrong password"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	//generate token
 	claims := jwt.MapClaims{}
 	claims["id"] = user.ID
 	claims["role"] = user.Role
-	claims["exp"] = time.Now().Add(time.Hour * 3).Unix() // 3 hours expired
+	claims["exp"] = time.Now().Add(time.Hour * 2).Unix()
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)
 	if errGenerateToken != nil {
@@ -128,15 +122,40 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	loginResponse := authdto.LoginResponse{
-		ID:       user.ID,
 		Fullname: user.Fullname,
 		Email:    user.Email,
-		// Password: user.Password,
-		Token: token,
+		Token:    token,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	response := dto.SuccessResult{Status: "success", Data: loginResponse}
 	json.NewEncoder(w).Encode(response)
 
+}
+
+func (h *handlerAuth) CheckAuth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userId := int(userInfo["id"].(float64))
+
+	// Check User by Id
+	user, err := h.AuthRepository.Getuser(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	CheckAuthResponse := authdto.CheckAuthResponse{
+		Id:       user.ID,
+		FullName: user.Fullname,
+		Email:    user.Email,
+		Role:     user.Role,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := dto.SuccessResult{Status: "Success", Data: CheckAuthResponse}
+	json.NewEncoder(w).Encode(response)
 }

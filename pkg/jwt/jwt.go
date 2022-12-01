@@ -3,6 +3,7 @@ package jwtToken
 import (
 	"fmt"
 	"os"
+
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -29,6 +30,7 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return token, nil
 }
 

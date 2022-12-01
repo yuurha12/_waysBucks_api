@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"waysbucks_BE/models"
+	"ways-bucks-api/models"
 
 	"gorm.io/gorm"
 )
@@ -10,8 +10,8 @@ type ToppingRepository interface {
 	FindToppings() ([]models.Topping, error)
 	GetTopping(ID int) (models.Topping, error)
 	CreateTopping(topping models.Topping) (models.Topping, error)
-	DeleteTopping(topping models.Topping) (models.Topping, error)
 	UpdateTopping(topping models.Topping) (models.Topping, error)
+	DeleteTopping(topping models.Topping) (models.Topping, error)
 }
 
 func RepositoryTopping(db *gorm.DB) *repository {
@@ -19,15 +19,14 @@ func RepositoryTopping(db *gorm.DB) *repository {
 }
 
 func (r *repository) FindToppings() ([]models.Topping, error) {
-	var Toppings []models.Topping
-	err := r.db.Find(&Toppings).Error
+	var toppings []models.Topping
+	err := r.db.Find(&toppings).Error
 
-	return Toppings, err
+	return toppings, err
 }
 
 func (r *repository) GetTopping(ID int) (models.Topping, error) {
 	var topping models.Topping
-	// not yet using category relation, cause this step doesnt Belong to Many
 	err := r.db.First(&topping, ID).Error
 
 	return topping, err
@@ -39,14 +38,14 @@ func (r *repository) CreateTopping(topping models.Topping) (models.Topping, erro
 	return topping, err
 }
 
-func (r *repository) DeleteTopping(topping models.Topping) (models.Topping, error) {
-	err := r.db.Delete(&topping).Error
+func (r *repository) UpdateTopping(topping models.Topping) (models.Topping, error) {
+	err := r.db.Save(&topping).Error
 
 	return topping, err
 }
 
-func (r *repository) UpdateTopping(topping models.Topping) (models.Topping, error) {
-	err := r.db.Save(&topping).Error // Using Save method
+func (r *repository) DeleteTopping(topping models.Topping) (models.Topping, error) {
+	err := r.db.Delete(&topping).Error
 
 	return topping, err
 }

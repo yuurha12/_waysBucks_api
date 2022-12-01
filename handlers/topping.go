@@ -3,30 +3,27 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strconv"
-	dto "waysbucks_BE/dto/result"
-	toppingdto "waysbucks_BE/dto/topping"
-	"waysbucks_BE/models"
-	"waysbucks_BE/repositories"
+	dto "ways-bucks-api/dto/result"
+	toppingdto "ways-bucks-api/dto/topping"
+	"ways-bucks-api/models"
+	"ways-bucks-api/repositories"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
-type handlerTopping struct {
+var path_file_topping = "http://localhost:5000/uploads/"
+
+type handlersTopping struct {
 	ToppingRepository repositories.ToppingRepository
 }
 
-// Create `path_image` Global variable here ...
-var path_image = "http://localhost:5000/uploads/"
-
-func HandlerTopping(ToppingRepository repositories.ToppingRepository) *handlerTopping {
-	return &handlerTopping{ToppingRepository}
+func HandlerTopping(ToppingRepository repositories.ToppingRepository) *handlersTopping {
+	return &handlersTopping{ToppingRepository}
 }
 
-func (h *handlerTopping) FindToppings(w http.ResponseWriter, r *http.Request) {
+func (h *handlersTopping) FindToppings(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	toppings, err := h.ToppingRepository.FindToppings()
@@ -37,175 +34,95 @@ func (h *handlerTopping) FindToppings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create Embed Path File on Image property here ...
 	for i, p := range toppings {
-		toppings[i].Image = os.Getenv("PATH_FILE") + p.Image
+		toppings[i].Image = path_file_topping + p.Image
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Status: "success", Data: toppings}
+	response := dto.SuccessResult{Status: "Success", Data: toppings}
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *handlerTopping) GetTopping(w http.ResponseWriter, r *http.Request) {
+func (h *handlersTopping) GetTopping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
-	var topping models.Topping
 	topping, err := h.ToppingRepository.GetTopping(id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Topping not found"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// Create Embed Path File on Image property here ...
-	topping.Image = path_image + topping.Image
+	topping.Image = path_file_topping + topping.Image
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Status: "success", Data: convertResponseTopping(topping)}
+	response := dto.SuccessResult{Status: "Success", Data: topping}
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *handlerTopping) CreateTopping(w http.ResponseWriter, r *http.Request) {
+func (h *handlersTopping) CreateTopping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// get data user token
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-	userId := int(userInfo["id"].(float64))
-
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-
-	//admin token condition
-	if userId != id && userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	// Get dataFile from midleware and store to filename variable here ...
-	dataContex := r.Context().Value("dataFile") // add this code
-	filename := dataContex.(string)             // add this code
+	dataContex := r.Context().Value("dataFile")
+	filename := dataContex.(string)
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
-	// qty, _ := strconv.Atoi(r.FormValue("qty"))
-	request := toppingdto.ToppingRequest{
+	request := toppingdto.CreateTopping{
 		Title: r.FormValue("title"),
 		Price: price,
-		// Qty:   qty,
-	}
-
-	validation := validator.New()
-	err := validation.Struct(request)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
 	}
 
 	topping := models.Topping{
 		Title: request.Title,
 		Price: request.Price,
 		Image: filename,
-		// Qty:    request.Qty,
 	}
 
-	topping, err = h.ToppingRepository.CreateTopping(topping)
+	data, err := h.ToppingRepository.CreateTopping(topping)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	topping, _ = h.ToppingRepository.GetTopping(topping.ID)
-	topping.Image = path_image + topping.Image
-
-	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Status: "success", Data: topping}
-	json.NewEncoder(w).Encode(response)
-}
-
-func (h *handlerTopping) DeleteTopping(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// get data user token
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-	userId := int(userInfo["id"].(float64))
-
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-
-	if userId != id && userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	user, err := h.ToppingRepository.GetTopping(id)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	_, err = h.ToppingRepository.DeleteTopping(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+
+	if userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "only admin can add topping"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	data := user.ID
-
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Status: "success", Data: data}
+	response := dto.SuccessResult{Status: "Success", Data: convertResponseTopping(data)}
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *handlerTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
+func (h *handlersTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-	userId := int(userInfo["id"].(float64))
-
-	dataContex := r.Context().Value("dataFile") // add this code
-	filename := dataContex.(string)             // add this code
+	dataContex := r.Context().Value("dataFile")
+	filename := dataContex.(string)
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
-	qty, _ := strconv.Atoi(r.FormValue("qty"))
-
-	request := toppingdto.UpdateTopping{
+	request := toppingdto.CreateTopping{
 		Title: r.FormValue("title"),
 		Price: price,
-		Qty:   qty,
+		Image: filename,
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-
-	//admin token condition
-	if userId != id && userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "not ADMIN"}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
 	topping, err := h.ToppingRepository.GetTopping(int(id))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return
 	}
 
 	if request.Title != "" {
@@ -215,12 +132,9 @@ func (h *handlerTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
 	if request.Price != 0 {
 		topping.Price = request.Price
 	}
-	if filename != "false" {
-		topping.Image = filename
-	}
 
-	if qty != 0 {
-		topping.Qty = request.Qty
+	if request.Image != "" {
+		topping.Image = request.Image
 	}
 
 	data, err := h.ToppingRepository.UpdateTopping(topping)
@@ -231,18 +145,59 @@ func (h *handlerTopping) UpdateTopping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+
+	if userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "only admin can edit topping"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Status: "success", Data: convertResponseTopping(data)}
+	response := dto.SuccessResult{Status: "Success", Data: convertResponseTopping(data)}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *handlersTopping) DeleteTopping(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	topping, err := h.ToppingRepository.GetTopping(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+	}
+
+	data, err := h.ToppingRepository.DeleteTopping(topping)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userRole := userInfo["role"]
+
+	if userRole != "admin" {
+		w.WriteHeader(http.StatusUnauthorized)
+		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "only admin can delete topping"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Status: "Success", Data: data}
 	json.NewEncoder(w).Encode(response)
 }
 
 func convertResponseTopping(u models.Topping) toppingdto.ToppingResponse {
 	return toppingdto.ToppingResponse{
-		ID:    u.ID,
 		Title: u.Title,
 		Price: u.Price,
 		Image: u.Image,
-		// Qty:   u.Qty,
-		// User:     u.User,
 	}
 }

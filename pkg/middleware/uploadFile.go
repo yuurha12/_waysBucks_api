@@ -10,17 +10,13 @@ import (
 
 func UploadFile(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Upload file
-		// FormFile returns the first file for the given key `myFile`
-		// it also returns the FileHeader so we can get the Filename,
-		// the Header and the size of the file
 		file, _, err := r.FormFile("image")
 
-		if err != nil && r.Method == "PATCH" {
-			ctx := context.WithValue(r.Context(), "dataFile", "false")
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
+		// if err != nil && r.Method == "PATCH" {
+		// 	ctx := context.WithValue(r.Context(), "dataFile", "false")
+		// 	next.ServeHTTP(w, r.WithContext(ctx))
+		// 	return
+		// }
 
 		if err != nil {
 			fmt.Println(err)
@@ -37,7 +33,7 @@ func UploadFile(next http.HandlerFunc) http.HandlerFunc {
 		r.ParseMultipartForm(MAX_UPLOAD_SIZE)
 		if r.ContentLength > MAX_UPLOAD_SIZE {
 			w.WriteHeader(http.StatusBadRequest)
-			response := Result{Code: http.StatusBadRequest, Message: "Max size in 10mb"}
+			response := Result{Code: http.StatusBadRequest, Message: "Max size in 1mb"}
 			json.NewEncoder(w).Encode(response)
 			return
 		}

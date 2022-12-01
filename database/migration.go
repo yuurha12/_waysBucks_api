@@ -2,18 +2,12 @@ package database
 
 import (
 	"fmt"
-	"waysbucks_BE/models"
-	"waysbucks_BE/pkg/mysql"
+	"ways-bucks-api/models"
+	"ways-bucks-api/pkg/mysql"
 )
 
-// Automatic Migration if Running App
 func RunMigration() {
-	err := mysql.DB.AutoMigrate(
-		&models.User{},
-		&models.Product{},
-		&models.Topping{},
-		&models.Order{},
-	)
+	err := mysql.DB.AutoMigrate(&models.User{}, &models.Product{}, &models.Topping{}, &models.Profile{}, &models.Cart{}, &models.Transaction{})
 
 	if err != nil {
 		fmt.Println(err)
