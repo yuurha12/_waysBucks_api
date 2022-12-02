@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"ways-bucks-api/handlers"
-	"ways-bucks-api/pkg/middleware"
-	"ways-bucks-api/pkg/mysql"
-	"ways-bucks-api/repositories"
+	"waysbuck/handlers"
+	"waysbuck/pkg/middleware"
+	"waysbuck/pkg/mysql"
+	"waysbuck/repositories"
 
 	"github.com/gorilla/mux"
 )

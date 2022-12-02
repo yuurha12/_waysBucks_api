@@ -30,7 +30,6 @@ func VerifyToken(tokenString string) (*jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return token, nil
 }
 

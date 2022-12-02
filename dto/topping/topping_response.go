@@ -1,7 +1,9 @@
 package toppingdto
 
 type ToppingResponse struct {
-	Title string `json:"title" form:"title"`
-	Price int    `json:"price" form:"price"`
-	Image string `json:"image" form:"image"`
+	ID    int    `json:"id"`
+	Title string `json:"title" gorm:"type: varchar(255)"`
+	Price int    `json:"price" gorm:"type: int" `
+	Image string `json:"image" gorm:"type: varchar(255)"`
+	Qty   int    `json:"qty" form:"qty" gorm:"type: int"`
 }

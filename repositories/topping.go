@@ -1,13 +1,13 @@
 package repositories
 
 import (
-	"ways-bucks-api/models"
+	"waysbuck/models"
 
 	"gorm.io/gorm"
 )
 
 type ToppingRepository interface {
-	FindToppings() ([]models.Topping, error)
+	FindTopping() ([]models.Topping, error)
 	GetTopping(ID int) (models.Topping, error)
 	CreateTopping(topping models.Topping) (models.Topping, error)
 	UpdateTopping(topping models.Topping) (models.Topping, error)
@@ -18,15 +18,17 @@ func RepositoryTopping(db *gorm.DB) *repository {
 	return &repository{db}
 }
 
-func (r *repository) FindToppings() ([]models.Topping, error) {
-	var toppings []models.Topping
-	err := r.db.Find(&toppings).Error
+func (r *repository) FindTopping() ([]models.Topping, error) {
+	var topping []models.Topping
+	err := r.db.Find(&topping).Error
 
-	return toppings, err
+	return topping, err
 }
+
 
 func (r *repository) GetTopping(ID int) (models.Topping, error) {
 	var topping models.Topping
+	// not yet using category relation, cause this step doesnt Belong to Many
 	err := r.db.First(&topping, ID).Error
 
 	return topping, err

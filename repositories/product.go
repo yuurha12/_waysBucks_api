@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"ways-bucks-api/models"
+	"waysbuck/models"
 
 	"gorm.io/gorm"
 )
@@ -25,8 +25,10 @@ func (r *repository) FindProducts() ([]models.Product, error) {
 	return products, err
 }
 
+
 func (r *repository) GetProduct(ID int) (models.Product, error) {
 	var product models.Product
+	// not yet using category relation, cause this step doesnt Belong to Many
 	err := r.db.First(&product, ID).Error
 
 	return product, err
