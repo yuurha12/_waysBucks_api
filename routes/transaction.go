@@ -1,22 +1,24 @@
 package routes
 
 import (
-	"waysbuck/handlers"
-	"waysbuck/pkg/middleware"
-	"waysbuck/pkg/mysql"
-	"waysbuck/repositories"
+	"waysbucks/handlers"
+	"waysbucks/pkg/middleware"
+	"waysbucks/pkg/mysql"
+	"waysbucks/repositories"
 
 	"github.com/gorilla/mux"
 )
 
-func TransactionRoutes(r *mux.Router) {
+func Transaction(r *mux.Router) {
 	transactionRepository := repositories.RepositoryTransaction(mysql.DB)
 	h := handlers.HandlerTransaction(transactionRepository)
 
-	r.HandleFunc("/transactions", middleware.Auth(h.FindTransaction)).Methods("GET")
-	r.HandleFunc("/transaction/{id}", h.GetTransaction).Methods("GET")
+	r.HandleFunc("/transactions", middleware.Auth(h.FindTransactions)).Methods("GET")
+	r.HandleFunc("/transaction", middleware.Auth(h.GetTransaction)).Methods("GET")
+	r.HandleFunc("/transaction/{id}", middleware.Auth(h.GetDetailTransaction)).Methods("GET")
+	r.HandleFunc("/user-transaction", middleware.Auth(h.GetUserTransaction)).Methods("GET")
 	r.HandleFunc("/transaction", middleware.Auth(h.CreateTransaction)).Methods("POST")
-	r.HandleFunc("/transaction/{id}", middleware.Auth(h.UpdateTransaction)).Methods("PATCH")
+	r.HandleFunc("/transaction", middleware.Auth(h.UpdateTransaction)).Methods("PATCH")
 	r.HandleFunc("/transaction/{id}", middleware.Auth(h.DeleteTransaction)).Methods("DELETE")
-	r.HandleFunc("/my-transaction", middleware.Auth(h.GetOrderByID)).Methods("GET")
+	// r.HandleFunc("/notification", h.Notification).Methods("POST")
 }

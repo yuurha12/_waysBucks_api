@@ -1,16 +1,16 @@
 package routes
 
 import (
-	"waysbuck/handlers"
-	"waysbuck/pkg/middleware"
-	"waysbuck/pkg/mysql"
-	"waysbuck/repositories"
+	"waysbucks/handlers"
+	"waysbucks/pkg/middleware"
+	"waysbucks/pkg/mysql"
+	"waysbucks/repositories"
 
 	"github.com/gorilla/mux"
 )
 
 func ProductRoutes(r *mux.Router) {
-	productRepository := repositories.RepositoryProduct(mysql.DB)
+	productRepository := repositories.RepositoryTopping(mysql.DB)
 	h := handlers.HandlerProduct(productRepository)
 
 	r.HandleFunc("/products", h.FindProducts).Methods("GET")

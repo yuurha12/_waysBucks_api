@@ -1,26 +1,38 @@
 package transactiondto
 
-type TransactionRequest struct {
-	ID      int    `json:"id"`
-	Name    string `json:"name" form:"name" gorm:"type: varchar(255)"`
-	Email   string `json:"email" form:"email" gorm:"type: varchar(255)"`
-	Phone   string `json:"phone" form:"phone" gorm:"type: varchar(255)"`
-	PosCode string `json:"pos_code" form:"pos_code" gorm:"type: varchar(255)"`
-	Address string `json:"address" form:"address" gorm:"type : varchar(255)"`
-	Total   int    `json:"total" gorm:"type : int"`
+import "waysbucks/models"
+
+type CreateTransaction struct {
+	ID         int64  `json:"id"`
+	UserID     int    `json:"user_id" form:"user_id"`
+	Name       string `json:"name" form:"name"`
+	Email      string `json:"email" form:"email"`
+	Phone      int    `json:"phone" form:"phone"`
+	PostalCode int    `json:"postalcode" form:"postalcode"`
+	Address    string `json:"address" form:"address"`
+	Status     string `json:"status"`
+}
+
+type UpdateTransaction struct {
+	UserID     int    `json:"user_id" form:"user_id"`
+	Name       string `json:"name" form:"name"`
+	Email      string `json:"email" form:"email"`
+	Phone      int    `json:"phone" form:"phone"`
+	PostalCode int    `json:"postalcode" form:"postalcode"`
+	Address    string `json:"address" form:"address"`
+	Status     string `json:"status"`
+	Total      int    `json:"total"`
 }
 
 type TransactionResponse struct {
-	ID      int      `json:"id"`
-	Name    string   `json:"name" form:"name" gorm:"type: varchar(255)"`
-	Email   string   `json:"email" form:"email" gorm:"type: varchar(255)"`
-	Phone   string   `json:"phone" form:"phone" gorm:"type: varchar(255)"`
-	PosCode string   `json:"pos_code" form:"pos_code" gorm:"type: varchar(255)"`
-	Address string   `json:"address" form:"address" gorm:"type : varchar(255)"`
-	Order   []string `json:"order"`
-	Total   int      `json:"total" gorm:"type : int"`
-}
-
-type StatusTransaction struct {
-	Status string `json:"status" gorm:"type: varchar(255)"`
+	UserID     int                       `json:"user_id" form:"user_id"`
+	Name       string                    `json:"name" form:"name"`
+	Email      string                    `json:"email" form:"email"`
+	Phone      int                       `json:"phone" form:"phone"`
+	PostalCode int                       `json:"postalcode" form:"postalcode"`
+	Address    string                    `json:"address" form:"address"`
+	ProductID  int                       `json:"product_id" form:"product_id"`
+	ToppingID  int                       `json:"topping_id" form:"topping_id"`
+	Cart       []models.CartResponse     `json:"order"`
+	Product    models.ProductTransaction `json:"product"`
 }

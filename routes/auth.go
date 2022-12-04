@@ -1,19 +1,19 @@
 package routes
 
 import (
-	"waysbuck/handlers"
-	"waysbuck/pkg/middleware"
-	"waysbuck/pkg/mysql"
-	"waysbuck/repositories"
+	"waysbucks/handlers"
+	"waysbucks/pkg/middleware"
+	"waysbucks/pkg/mysql"
+	"waysbucks/repositories"
 
 	"github.com/gorilla/mux"
 )
 
 func AuthRoutes(r *mux.Router) {
-  userRepository := repositories.RepositoryUser(mysql.DB)
-  h := handlers.HandlerAuth(userRepository)
+	authReposutory := repositories.RepositoryAuth(mysql.DB)
+	h := handlers.HandlerAuth(authReposutory)
 
-  r.HandleFunc("/register", h.Register).Methods("POST")
+	r.HandleFunc("/register", h.Register).Methods("POST")
 	r.HandleFunc("/login", h.Login).Methods("POST")
 	r.HandleFunc("/check-auth", middleware.Auth(h.CheckAuth)).Methods("GET")
 }

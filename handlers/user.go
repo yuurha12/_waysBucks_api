@@ -3,126 +3,121 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strconv"
-	"time"
-	authdto "waysbuck/dto/auth"
-	dto "waysbuck/dto/result"
-	usersdto "waysbuck/dto/users"
-	"waysbuck/models"
-	"waysbuck/repositories"
+	dto "waysbucks/dto/result"
+	userdto "waysbucks/dto/user"
+	"waysbucks/models"
+	"waysbucks/pkg/bcrypt"
+	"waysbucks/repositories"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
-type handlerUser struct {
+type handlersUser struct {
 	UserRepository repositories.UserRepository
 }
 
-func HandlerUser(UserRepository repositories.UserRepository) *handlerUser {
-	return &handlerUser{UserRepository}
+func HandlersUser(UserRepository repositories.UserRepository) *handlersUser {
+	return &handlersUser{UserRepository}
 }
 
-func (h *handlerUser) FindUsers(w http.ResponseWriter, r *http.Request) {
+func (h *handlersUser) FindUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-
-	if userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "You're not admin"}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
 
 	users, err := h.UserRepository.FindUsers()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(err.Error())
-	}
-
-	for i, p := range users {
-		users[i].Image = os.Getenv("PATH_FILE") + p.Image
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: "success", Data: users}
+	response := dto.SuccessResult{Code: "Success", Data: users}
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *handlerUser) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *handlersUser) GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-	userID := int(userInfo["id"].(float64))
+	id := int(userInfo["id"].(float64))
 
-	if userID != id && userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "You're not admin"}
+	user, err := h.UserRepository.GetUser(id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	user.Profile.Image = path_file + user.Profile.Image
 
-	
-	user, err := h.UserRepository.GetUserByID(id)
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: "Success", Data: user}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *handlersUser) CreateUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	request := new(userdto.CreateUser)
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+	}
+
+	validate := validator.New()
+	err := validate.Struct(request)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return
 	}
 
-	user.Image = os.Getenv("PATH_FILE") + user.Image
-
-	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: "success", Data: user}
-	json.NewEncoder(w).Encode(response)
-}
-
-func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// request := new(usersdto.UpdateUser)
-	// if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-	// 	json.NewEncoder(w).Encode(response)
-	// 	return
-	// }
-
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-	userID := int(userInfo["id"].(float64))
-
-
-	if userID != id && userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "You're not admin"}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-	
-	dataContext := r.Context().Value("dataFile") // add this code
-	filename := dataContext.(string)
-  request := authdto.RegisterRequest{
-		Fullname:  r.FormValue("fullname"),
-		Email: r.FormValue("email"),
-		Password: r.FormValue("password"),
-	}
-
-	user, err := h.UserRepository.GetUserByID(int(id))
+	password, err := bcrypt.HashingPassword(request.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return
+	}
+
+	user := models.User{
+		Fullname: request.Fullname,
+		Email:    request.Email,
+		Password: password,
+	}
+
+	data, err := h.UserRepository.CreateUser(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: "Success", Data: data}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *handlersUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	request := new(userdto.UpdateUser)
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+	}
+
+	id, _ := strconv.Atoi(mux.Vars(r)["int"])
+	user, err := h.UserRepository.GetUser(int(id))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 	}
 
 	if request.Fullname != "" {
@@ -136,67 +131,37 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if request.Password != "" {
 		user.Password = request.Password
 	}
-	if filename != "false" {
-		user.Image = filename
-	}
-	
-	user.UpdateAt= time.Now()
 
 	data, err := h.UserRepository.UpdateUser(user)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	data.Image = os.Getenv("PATH_FILE") + data.Image
-	
-	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: "success", Data: data}
-	json.NewEncoder(w).Encode(response)
-}
-
-func (h *handlerUser) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userRole := userInfo["role"]
-	userID := int(userInfo["id"].(float64))
-
-
-	if userID != id && userRole != "admin" {
-		w.WriteHeader(http.StatusUnauthorized)
-		response := dto.ErrorResult{Code: http.StatusUnauthorized, Message: "You're not admin"}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	user, err := h.UserRepository.GetUserByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	response := dto.SuccessResult{Code: "Success", Data: data}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h handlersUser) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id, _ := strconv.Atoi(mux.Vars(r)["int"])
+	user, err := h.UserRepository.GetUser(id)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
 	}
 
 	data, err := h.UserRepository.DeleteUser(user)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
-		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: "success", Data: convertResponse(data)}
+	response := dto.SuccessResult{Code: "Success", Data: data}
 	json.NewEncoder(w).Encode(response)
-}
-
-func convertResponse(u models.User) usersdto.DeleteResponse {
-	return usersdto.DeleteResponse{
-		ID:       u.ID,
-	
-	}
 }

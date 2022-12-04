@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	dto "waysbuck/dto/result"
-	jwtToken "waysbuck/pkg/jwt"
+	dto "waysbucks/dto/result"
+	jwtToken "waysbucks/pkg/jwt"
 )
 
 type Result struct {
