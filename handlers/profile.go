@@ -76,6 +76,10 @@ func (h *handlersProfile) CreateProfile(w http.ResponseWriter, r *http.Request) 
 	}
 
 	profile := models.Profile{
+		Phone:      request.Phone,
+		Address:    request.Address,
+		PostalCode: request.PostalCode,
+		Image:      request.Image,
 		UserID:     request.UserID,
 	}
 
@@ -100,7 +104,12 @@ func (h *handlersProfile) UpdateProfile(w http.ResponseWriter, r *http.Request) 
 	dataContex := r.Context().Value("dataFile")
 	filename := dataContex.(string)
 
-	_ = profiledto.UpdateProfile{
+	phone, _ := strconv.Atoi(r.FormValue("phone"))
+	postalcode, _ := strconv.Atoi(r.FormValue("postalcode"))
+	request := profiledto.UpdateProfile{
+		Address:    r.FormValue("address"),
+		Phone:      phone,
+		PostalCode: postalcode,
 		Image:      filename,
 	}
 
@@ -109,6 +118,18 @@ func (h *handlersProfile) UpdateProfile(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
+	}
+
+	if request.Phone != 0{
+		profile.Phone = request.Phone
+	}
+
+	if request.PostalCode != 0{
+		profile.PostalCode = postalcode
+	}
+
+	if request.Address != "" {
+		profile.Address = request.Address
 	}
 
 	if filename != "false" {
@@ -152,8 +173,8 @@ func (h *handlersProfile) DeleteProfile(w http.ResponseWriter, r *http.Request) 
 
 func convertResponseProfile(u models.Profile) profiledto.ProfileResponse {
 	return profiledto.ProfileResponse{
-		Image:      u.Image,
-		UserID:     u.UserID,
-		User:       u.User,
+		Image:  u.Image,
+		UserID: u.UserID,
+		User:   u.User,
 	}
 }

@@ -111,14 +111,9 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	idTrans := time.Unix()
 
 	dataTransaction := models.Transaction{
-		ID:         idTrans,
-		UserID:     id,
-		Name:       request.Name,
-		Email:      request.Email,
-		Phone:      request.Phone,
-		PostalCode: request.PostalCode,
-		Address:    request.Address,
-		Status:     "waiting",
+		ID:     idTrans,
+		UserID: id,
+		Status: "waiting",
 	}
 
 	transaction, _ := h.TransactionRepository.GetTransaction()
@@ -276,7 +271,7 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 		SendMail("failed", transaction) // Call SendMail function ...
 		h.TransactionRepository.UpdateTransactions("failed", orderId)
 	} else if transactionStatus == "pending" {
-		// TODO set transaction status on your databaase to 'pending' / waiting payment
+		// TODO set transaction status on your database to 'pending' / waiting payment
 		h.TransactionRepository.UpdateTransactions("pending", orderId)
 	}
 
