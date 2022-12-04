@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	// "log"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -15,7 +15,7 @@ import (
 	"waysbucks/models"
 	"waysbucks/repositories"
 
-	// "gopkg.in/gomail.v2"
+	"gopkg.in/gomail.v2"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
@@ -236,105 +236,105 @@ func (h *handlerTransaction) GetUserTransaction(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(response)
 }
 
-// func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request) {
-// 	var notificationPayload map[string]interface{}
+func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request) {
+	var notificationPayload map[string]interface{}
 
-// 	err := json.NewDecoder(r.Body).Decode(&notificationPayload)
-// 	if err != nil {
-// 		w.WriteHeader(http.StatusBadRequest)
-// 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-// 		json.NewEncoder(w).Encode(response)
-// 		return
-// 	}
+	err := json.NewDecoder(r.Body).Decode(&notificationPayload)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 
-// 	transactionStatus := notificationPayload["transaction_status"].(string)
-// 	fraudStatus := notificationPayload["fraud_status"].(string)
-// 	orderId := notificationPayload["order_id"].(string)
-// 	transaction, _ := h.TransactionRepository.GetOneTransaction(orderId)
+	transactionStatus := notificationPayload["transaction_status"].(string)
+	fraudStatus := notificationPayload["fraud_status"].(string)
+	orderId := notificationPayload["order_id"].(string)
+	transaction, _ := h.TransactionRepository.GetOneTransaction(orderId)
 
-// 	if transactionStatus == "capture" {
-// 		if fraudStatus == "challenge" {
-// 			// TODO set transaction status on your database to 'challenge'
-// 			// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
-// 			h.TransactionRepository.UpdateTransactions("pending", orderId)
-// 		} else if fraudStatus == "accept" {
-// 			// TODO set transaction status on your database to 'success'
-// 			SendMail("success", transaction) // Call SendMail function ...
-// 			h.TransactionRepository.UpdateTransactions("success", orderId)
-// 		}
-// 	} else if transactionStatus == "settlement" {
-// 		// TODO set transaction status on your databaase to 'success'
-// 		SendMail("success", transaction) // Call SendMail function ...
-// 		h.TransactionRepository.UpdateTransactions("success", orderId)
-// 	} else if transactionStatus == "deny" {
-// 		// TODO you can ignore 'deny', because most of the time it allows paym~ent retries
-// 		// and later can become success
-// 		SendMail("failed", transaction) // Call SendMail function ...
-// 		h.TransactionRepository.UpdateTransactions("failed", orderId)
-// 	} else if transactionStatus == "cancel" || transactionStatus == "expire" {
-// 		// TODO set transaction status on your databaase to 'failure'
-// 		SendMail("failed", transaction) // Call SendMail function ...
-// 		h.TransactionRepository.UpdateTransactions("failed", orderId)
-// 	} else if transactionStatus == "pending" {
-// 		// TODO set transaction status on your databaase to 'pending' / waiting payment
-// 		h.TransactionRepository.UpdateTransactions("pending", orderId)
-// 	}
+	if transactionStatus == "capture" {
+		if fraudStatus == "challenge" {
+			// TODO set transaction status on your database to 'challenge'
+			// e.g: 'Payment status challenged. Please take action on your Merchant Administration Portal
+			h.TransactionRepository.UpdateTransactions("pending", orderId)
+		} else if fraudStatus == "accept" {
+			// TODO set transaction status on your database to 'success'
+			SendMail("success", transaction) // Call SendMail function ...
+			h.TransactionRepository.UpdateTransactions("success", orderId)
+		}
+	} else if transactionStatus == "settlement" {
+		// TODO set transaction status on your databaase to 'success'
+		SendMail("success", transaction) // Call SendMail function ...
+		h.TransactionRepository.UpdateTransactions("success", orderId)
+	} else if transactionStatus == "deny" {
+		// TODO you can ignore 'deny', because most of the time it allows paym~ent retries
+		// and later can become success
+		SendMail("failed", transaction) // Call SendMail function ...
+		h.TransactionRepository.UpdateTransactions("failed", orderId)
+	} else if transactionStatus == "cancel" || transactionStatus == "expire" {
+		// TODO set transaction status on your databaase to 'failure'
+		SendMail("failed", transaction) // Call SendMail function ...
+		h.TransactionRepository.UpdateTransactions("failed", orderId)
+	} else if transactionStatus == "pending" {
+		// TODO set transaction status on your databaase to 'pending' / waiting payment
+		h.TransactionRepository.UpdateTransactions("pending", orderId)
+	}
 
-// 	w.WriteHeader(http.StatusOK)
-// }
+	w.WriteHeader(http.StatusOK)
+}
 
 // notif
-// func SendMail(status string, transaction models.Transaction) {
+func SendMail(status string, transaction models.Transaction) {
 
-// 	if status != transaction.Status && (status == "success") {
-// 		var CONFIG_SMTP_HOST = "smtp.gmail.com"
-// 		var CONFIG_SMTP_PORT = 587
-// 		var CONFIG_SENDER_NAME = "WaysBucks <waysbucks@gmail.com>"
-// 		var CONFIG_AUTH_EMAIL = os.Getenv("EMAIL_SYSTEM")
-// 		var CONFIG_AUTH_PASSWORD = os.Getenv("PASSWORD_SYSTEM")
+	if status != transaction.Status && (status == "success") {
+		var CONFIG_SMTP_HOST = "smtp.gmail.com"
+		var CONFIG_SMTP_PORT = 587
+		var CONFIG_SENDER_NAME = "WaysBucks <hoki.ikki@gmail.com>"
+		var CONFIG_AUTH_EMAIL = os.Getenv("EMAIL_SYSTEM")
+		var CONFIG_AUTH_PASSWORD = os.Getenv("PASSWORD_SYSTEM")
 
-// 		var productName = "."
-// 		var price = strconv.Itoa(transaction.Total)
+		var productName = "."
+		var price = strconv.Itoa(transaction.Total)
 
-// 		mailer := gomail.NewMessage()
-// 		mailer.SetHeader("From", CONFIG_SENDER_NAME)
-// 		mailer.SetHeader("To", transaction.User.Email)
-// 		mailer.SetHeader("Subject", "Transaction Status")
-// 		mailer.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
-// 	  <html lang="en">
-// 		<head>
-// 		<meta charset="UTF-8" />
-// 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-// 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-// 		<title>Document</title>
-// 		<style>
-// 		  h1 {
-// 		  color: brown;
-// 		  }
-// 		</style>
-// 		</head>
-// 		<body>
-// 		<h2>Product payment :</h2>
-// 		<ul style="list-style-type:none;">
-// 		  <li>Thank You For Buying Our Product%s</li>
-// 		  <li>Total payment: Rp.%s</li>
-// 		  <li>Status : <b>%s</b></li>
-// 		</ul>
-// 		</body>
-// 	  </html>`, productName, price, status))
+		mailer := gomail.NewMessage()
+		mailer.SetHeader("From", CONFIG_SENDER_NAME)
+		mailer.SetHeader("To", transaction.User.Email)
+		mailer.SetHeader("Subject", "Transaction Status")
+		mailer.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
+	  <html lang="en">
+		<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<style>
+		  h1 {
+		  color: brown;
+		  }
+		</style>
+		</head>
+		<body>
+		<h2>Product payment :</h2>
+		<ul style="list-style-type:none;">
+		  <li>Thank You For Buying Our Product%s</li>
+		  <li>Total payment: Rp.%s</li>
+		  <li>Status : <b>%s</b></li>
+		</ul>
+		</body>
+	  </html>`, productName, price, status))
 
-// 		dialer := gomail.NewDialer(
-// 			CONFIG_SMTP_HOST,
-// 			CONFIG_SMTP_PORT,
-// 			CONFIG_AUTH_EMAIL,
-// 			CONFIG_AUTH_PASSWORD,
-// 		)
+		dialer := gomail.NewDialer(
+			CONFIG_SMTP_HOST,
+			CONFIG_SMTP_PORT,
+			CONFIG_AUTH_EMAIL,
+			CONFIG_AUTH_PASSWORD,
+		)
 
-// 		err := dialer.DialAndSend(mailer)
-// 		if err != nil {
-// 			log.Fatal(err.Error())
-// 		}
+		err := dialer.DialAndSend(mailer)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
 
-// 		log.Println("Mail sent! to " + transaction.User.Email)
-// 	}
-// }
+		log.Println("Mail sent! to " + transaction.User.Email)
+	}
+}

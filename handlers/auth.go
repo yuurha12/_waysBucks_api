@@ -54,7 +54,7 @@ func (h *handlersAuth) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := models.User{
-		Fullname:     request.Fullname,
+		Fullname: request.Fullname,
 		Email:    request.Email,
 		Password: password,
 		Role:     "user",
@@ -110,6 +110,7 @@ func (h *handlersAuth) Login(w http.ResponseWriter, r *http.Request) {
 
 	claims := jwt.MapClaims{}
 	claims["id"] = user.ID
+	claims["role"] = user.Role
 	claims["exp"] = time.Now().Add(time.Hour * 2).Unix()
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)
@@ -120,10 +121,10 @@ func (h *handlersAuth) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	loginResponse := authdto.LoginResponse{
-		Fullname:  user.Fullname,
-		Email: user.Email,
-		Token: token,
-		Role:  user.Role,
+		Fullname: user.Fullname,
+		Email:    user.Email,
+		Token:    token,
+		Role:     user.Role,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -148,10 +149,10 @@ func (h *handlersAuth) CheckAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	CheckAuthResponse := authdto.CheckAuthResponse{
-		Id:    user.ID,
-		Fullname:  user.Fullname,
-		Email: user.Email,
-		Role:  user.Role,
+		Id:       user.ID,
+		Fullname: user.Fullname,
+		Email:    user.Email,
+		Role:     user.Role,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
