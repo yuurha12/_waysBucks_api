@@ -35,11 +35,6 @@ func (h *handlersProduct) FindProducts(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 	}
 
-	for i, p := range products {
-		imagePath := os.Getenv("PATH_FILE") + p.Image
-		products[i].Image = imagePath
-	  }
-
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Code: "Success", Data: products}
 	json.NewEncoder(w).Encode(response)
