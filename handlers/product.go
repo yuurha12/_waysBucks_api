@@ -70,7 +70,7 @@ func (h *handlersProduct) CreateProduct(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filepath := dataContex.(string)
+	filename := dataContex.(string)
 
 	var ctx = context.Background()
 	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
@@ -80,7 +80,7 @@ func (h *handlersProduct) CreateProduct(w http.ResponseWriter, r *http.Request) 
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
 // Upload file to Cloudinary ...
-resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbucks"});
+resp, err := cld.Upload.Upload(ctx, filename, uploader.UploadParams{Folder: "waysbucks"});
 
 if err != nil {
   fmt.Println(err.Error())
