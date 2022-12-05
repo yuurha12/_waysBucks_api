@@ -102,7 +102,7 @@ func (h *handlersProfile) UpdateProfile(w http.ResponseWriter, r *http.Request) 
 	id := int(userInfo["id"].(float64))
 
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filepath := dataContex.(string)
 
 	phone, _ := strconv.Atoi(r.FormValue("phone"))
 	postalcode, _ := strconv.Atoi(r.FormValue("postalcode"))
@@ -110,7 +110,7 @@ func (h *handlersProfile) UpdateProfile(w http.ResponseWriter, r *http.Request) 
 		Address:    r.FormValue("address"),
 		Phone:      phone,
 		PostalCode: postalcode,
-		Image:      filename,
+		Image:      filepath,
 	}
 
 	profile, err := h.ProfileRepository.GetProfile(int(id))
@@ -132,8 +132,8 @@ func (h *handlersProfile) UpdateProfile(w http.ResponseWriter, r *http.Request) 
 		profile.Address = request.Address
 	}
 
-	if filename != "false" {
-		profile.Image = filename
+	if filepath != "false" {
+		profile.Image = filepath
 	}
 
 	data, err := h.ProfileRepository.UpdateProfile(profile)

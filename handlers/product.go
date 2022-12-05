@@ -17,8 +17,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var path_file_product = "http://localhost:5000/uploads/"
-
 type handlersProduct struct {
 	ProductRepository repositories.ProductRepository
 }
@@ -70,7 +68,7 @@ func (h *handlersProduct) CreateProduct(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filepath := dataContex.(string)
 
 	var ctx = context.Background()
 	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
@@ -79,8 +77,7 @@ func (h *handlersProduct) CreateProduct(w http.ResponseWriter, r *http.Request) 
 
 	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
 
-// Upload file to Cloudinary ...
-resp, err := cld.Upload.Upload(ctx, filename, uploader.UploadParams{Folder: "waysbucks"});
+resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "waysbucks"});
 
 if err != nil {
   fmt.Println(err.Error())
@@ -98,6 +95,7 @@ if err != nil {
 		Image: resp.SecureURL,
 	}
 
+
 	data, err := h.ProductRepository.CreateProduct(product)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -114,13 +112,13 @@ func (h *handlersProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filepath := dataContex.(string)
 
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	request := productdto.CreateProduct{
 		Title: r.FormValue("title"),
 		Price: price,
-		Image: filename,
+		Image: filepath,
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
@@ -140,8 +138,8 @@ func (h *handlersProduct) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 		product.Price = request.Price
 	}
 
-	if filename != "false" {
-		product.Image = filename
+	if filepath != "false" {
+		product.Image = filepath
 	}
 
 	data, err := h.ProductRepository.UpdateProduct(product)
