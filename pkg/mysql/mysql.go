@@ -29,7 +29,7 @@ func DatabaseInit() {
 	//===== If using MySql =====
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
-s
+
 	if err != nil {
 		panic(err)
 	}
